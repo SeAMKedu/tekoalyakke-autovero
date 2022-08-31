@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verotusarvo</title>
+
+    <!-- bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/main.css') }}">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row form">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col">
+                        <label for="make">Valmistaja</label>
+                        <select id="make">
+                            <option selected disabled>Valitse</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label for="model">Malli</label>
+                        <select id="model" disabled>
+                            <option selected disabled>Valitse</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <output id="entryCount">0</output> kpl
+                    </div>
+                    <div class="col">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label for="mileage">Mittarilukema</label>
+                        <input type="range" id="mileage" disabled />
+                        <input type="number" id="valueMileage"></output>
+                    </div>
+                    <div class="col">
+                        <div>
+                            <input type="number" id="valueTaxPercentage">%
+                        </div>
+                    </div>
+                    <div class="col"></div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label for="age">Ikä</label>
+                        <input type="range" id="age" disabled />
+                        <input type="number" id="valueAge"></output>
+                    </div>
+                    <div class="col">
+                        <div>
+                            <output id="valueTax">TBD</output>
+                            +
+                            <output id="calculatedTax">TBD</output>
+                            =
+                            <output id="value"></output>
+                        </div>
+                    </div>
+                    <div class="col"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col table-wrapper">
+                    <table id="entries" class="sortable table table-striped">
+                        <thead class="table-light">
+                            <th data-width="200">Valmistaja</th>
+                            <th data-width="400">Malli</th>
+                            <th data-align="right" data-width="100">Vuosimalli</th>
+                            <th class="sorttable_numeric" data-align="right" data-width="100">Km</th>
+                            <th class="sorttable_numeric" data-align="right" data-width="100">Verotusarvo</th>
+                            <th class="sorttable_numeric" data-align="right" data-width="50">Veroprosentti</th>
+                            <th class="sorttable_numeric" data-align="right" data-width="100">Cm3</th>
+                        </thead>
+                        <tbody id="entriesBody">
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="col">
+                    <div id="graph"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <script src="{{ url_for('static', filename = 'sorttable.js') }}"></script>
+        <script src="{{ url_for('static', filename = 'js/main.js') }}"></script>
+
+</body>
+
+</html>
