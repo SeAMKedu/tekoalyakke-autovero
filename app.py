@@ -28,7 +28,7 @@ def importData(path, pickleTarget):
 
     df = pd.DataFrame()
 
-    pbar = tqdm(os.listdir(path), unit_scale=False, miniters=0, ascii=True)
+    pbar = tqdm([ f for f in os.listdir(path) if f.endswith("xls")], unit_scale=False, miniters=0, ascii=True)
 
     # go through the files in given directory 
     for file in pbar:
@@ -47,10 +47,10 @@ def importData(path, pickleTarget):
         df = pd.concat([df, frames])
 
     # rename columns to simpler
-    df.rename(columns={"Kunto A=Alennettu": "Kunto", "Ajokm/1000": "Mittarilukema"}, inplace=True)
+    df.rename(columns={"Ajokm/1000": "Mittarilukema"}, inplace=True)
 
     dateColumns = ["Päätöspäivä", "Ensirekisteröintipäivä"]
-    strColumns = ["Merkki", "Malli", "Mallin tarkennin", "Kunto", "Käyttövoima"]
+    strColumns = ["Merkki", "Malli", "Käyttövoima"]
 
     # convert to datetime
     for c in dateColumns:
@@ -79,12 +79,9 @@ def importData(path, pickleTarget):
     df["Kw"] = df["Kw"].replace({'nan': 0})
     df["Kw"] = df["Kw"].astype(int)
 
-    df["Kunto"] = df["Kunto"].fillna('n')
-    df["Kunto"] = df["Kunto"].replace({'nan': 'n'})
-
     # convert letter values to numbers
-    codes, uniques = pd.factorize(df["Kunto"].to_list(), sort=True)
-    df["Kunto"] = codes
+    #codes, uniques = pd.factorize(df["Kunto"].to_list(), sort=True)
+    #df["Kunto"] = codes
 
     # drop rows missing either make, model, taxation date or mileage
     df.dropna(subset=["Merkki", "Malli", "Päätöspäivä", "Mittarilukema"], inplace=True)
@@ -111,17 +108,16 @@ def importData(path, pickleTarget):
     df["NormAge"] = df.apply(lambda row : (row["Päätöspäivä"] - earliestDate).days / (latestDate - earliestDate).days, axis=1)
     df["Weight"] = df.apply(lambda row : 1 / (1 + math.exp(-(row["NormAge"] + a) / k)), axis=1)
 
-
     df["Vuosimalli"] = df.apply(lambda row : row["Ensirekisteröintipäivä"].year, axis=1)
     df["Vuosimalli"] = df["Vuosimalli"].astype("Int64")
 
-    df["Ikä"] = (df["Päätöspäivä"] - df["Ensirekisteröintipäivä"]).dt.days
+    df["Ikä"] = (df["Päätöspäivä"] - df["Ensirekisteröintipäivä"]).reset_index(drop=True).dt.days
     df["Ikä"] = df["Ikä"].astype("Int64")
     #df["Ikä"] = df["Ikä"].fillna(0)
     df = df.dropna(axis=0, subset=["Ikä"])
 
     # select interesting columns and sort by taxation date
-    export = df[["Merkki", "Malli", "Vuosimalli", "Mittarilukema", "Kunto", "Ensirekisteröintipäivä", "Päätöspäivä", "Ikä", "Verotusarvo", "Autovero", "Arvo", "Veroprosentti", "Weight", "Cm3", "Kw"]]
+    export = df[["Merkki", "Malli", "Vuosimalli", "Mittarilukema", "Ensirekisteröintipäivä", "Päätöspäivä", "Ikä", "Verotusarvo", "Autovero", "Arvo", "Veroprosentti", "Weight", "Cm3", "Kw"]]
     export = export.sort_values(by=["Päätöspäivä"])
     export.reset_index(drop=True, inplace=True)
 
