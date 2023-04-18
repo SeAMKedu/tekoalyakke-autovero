@@ -47,7 +47,7 @@ tbody > tr > :nth-child(5) , tbody > tr > :nth-child(6) {
     margin-bottom: 0.5em;
 }
 
-#valueTax, #value, #calculatedTax {
+#calculatedValues {
     font-weight: bold;
     font-size: x-large;
 }

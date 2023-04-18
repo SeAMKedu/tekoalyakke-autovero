@@ -7,8 +7,7 @@ const yMax = ySize - margin * 2;
 let x, y;
 let coefs;
 let entries = [];
-let avgAge = 0;
-let avgCubic = 0;
+
 let avgTaxPercentage = 0;
 
 let colors = d3.scaleLinear()
@@ -25,10 +24,16 @@ window.addEventListener('load', async (event) => {
     let tf = document.getElementById("mileage");
     tf.addEventListener("change", rangeChanged);
 
+    tf = document.getElementById("kw");
+    tf.addEventListener("change", rangeChanged);
+
     tf = document.getElementById("age");
     tf.addEventListener("change", rangeChanged);
 
     tf = document.getElementById("valueMileage");
+    tf.addEventListener("change", valueChanged);
+
+    tf = document.getElementById("valueKw");
     tf.addEventListener("change", valueChanged);
 
     tf = document.getElementById("valueAge");
@@ -78,10 +83,14 @@ async function loadEntries(make, model) {
             tf = document.getElementById("valueMileage");
             tf.value = "";
 
+            tf = document.getElementById("kw");
+            tf.setAttribute("disabled", "");
+            tf = document.getElementById("valueKw");
+            tf.value = "";
+
             tf = document.getElementById("entryCount");
             tf.innerHTML = entries.length;
 
-            avgCubic = 0;
         }
     }
 }
@@ -131,7 +140,6 @@ function updateList(listId, items) {
     }
 
     var option = document.createElement("option");
-    //option.setAttribute("value", " ");
     option.setAttribute("disabled", "");
     option.setAttribute("selected", "");
     option.innerHTML = "Valitse";
@@ -162,15 +170,15 @@ function updateRanges() {
         Mittarilukema: 0
     }).Mittarilukema / entries.length);
 
-    avgCubic = Math.round(entries.reduce(function (a, b) {
+    let averagePower = Math.round(entries.reduce(function (a, b) {
         return {
-            Cm3: a.Cm3 + b.Cm3
+            Kw: a.Kw + b.Kw
         }
     }, {
-        Cm3: 0
-    }).Cm3 / entries.length);
+        Kw: 0
+    }).Kw / entries.length);
 
-    avgTaxPercentage = Math.round(entries.reduce(function (a, b) {
+    let avgTaxPercentage = Math.round(entries.reduce(function (a, b) {
         return {
             Veroprosentti: a.Veroprosentti + b.Veroprosentti
         }
@@ -178,8 +186,9 @@ function updateRanges() {
         Veroprosentti: 0
     }).Veroprosentti / entries.length);
 
-    maxMileage = Math.max(...entries.map(e => e.Mittarilukema));
-    maxAge = Math.round(Math.max(...entries.map(e => e.Ikä)) / 365);
+    let maxMileage = Math.max(...entries.map(e => e.Mittarilukema));
+    let maxAge = Math.round(Math.max(...entries.map(e => e.Ikä)) / 365);
+    let maxPower = Math.max(...entries.map(e => e.Kw));
 
     let tf = document.getElementById("mileage");
     tf.removeAttribute("disabled");
@@ -193,17 +202,29 @@ function updateRanges() {
     tf.setAttribute("max", maxAge);
     tf.value = averageAge;
 
+    tf = document.getElementById("kw");
+    tf.removeAttribute("disabled");
+    tf.setAttribute("min", 0);
+    tf.setAttribute("max", maxPower);
+    tf.value = averagePower;
+
     tf = document.getElementById("valueMileage");
     tf.value = averageMileage;
 
     tf = document.getElementById("valueAge");
     tf.value = averageAge;
 
+    tf = document.getElementById("valueKw");
+    tf.value = averagePower;
+
     tf = document.getElementById("valueTaxPercentage");
     tf.removeAttribute("disabled");
     tf.value = avgTaxPercentage;
 
-    tf = document.getElementById("value");
+    tf = document.getElementById("usedPercentage");
+    tf.value = avgTaxPercentage;
+
+    tf = document.getElementById("valueTax");
     tf.removeAttribute("disabled");
     tf.value = "";
 
@@ -212,7 +233,7 @@ function updateRanges() {
 }
 
 function calc(e, coefs) {
-    return coefs[1] + coefs[0][0] * e.Mittarilukema + coefs[0][1] * e.Ikä + coefs[0][2] * e.Cm3;
+    return coefs[1] + coefs[0][0] * e.Mittarilukema + coefs[0][1] * e.Ikä + coefs[0][2] * e.Kw;
 }
 
 function calculateLinearValues(coefs, start, end, steps) {
@@ -247,6 +268,9 @@ async function changeMake(evt) {
     tf = document.getElementById("age");
     tf.setAttribute("disabled", "");
 
+    tf = document.getElementById("kw");
+    tf.setAttribute("disabled", "");
+
     await loadModels(selectedMake);
 
     let models = document.getElementById("model");
@@ -257,6 +281,10 @@ async function changeMake(evt) {
 
     tf = document.getElementById("valueTaxPercentage");
     tf.setAttribute("disabled", "");
+
+    tf = document.getElementById("usedPercentage");
+    tf.value = "?";
+
 
     tf = document.getElementById("entryCount");
     tf.innerHTML = 0;
@@ -272,6 +300,9 @@ function changeModel(evt) {
     let selectedModel = ddl.options[ddl.selectedIndex].text;
 
     let tf = document.getElementById("mileage");
+    tf.removeAttribute("disabled");
+
+    tf = document.getElementById("valueKw");
     tf.removeAttribute("disabled");
 
     tf = document.getElementById("valueTaxPercentage");
@@ -303,6 +334,7 @@ function clearAge() {
 function rangeChanged(event) {
     document.getElementById("valueMileage").value = document.getElementById("mileage").valueAsNumber;
     document.getElementById("valueAge").value = document.getElementById("age").valueAsNumber;
+    document.getElementById("valueKw").value = document.getElementById("kw").valueAsNumber;
 
     updatePrediction();
 }
@@ -310,6 +342,7 @@ function rangeChanged(event) {
 function valueChanged(event) {
     document.getElementById("mileage").value = document.getElementById("valueMileage").valueAsNumber;
     document.getElementById("age").value = document.getElementById("valueAge").valueAsNumber;
+    document.getElementById("kw").value = document.getElementById("valueKw").valueAsNumber;
 
     updatePrediction();
 }
@@ -318,16 +351,17 @@ function updatePrediction(event) {
     let mileage = document.getElementById("mileage").value * 1;
     let age = document.getElementById("age").valueAsNumber * 365;
     let taxPercentage = document.getElementById("valueTaxPercentage").value * 1;
+    let power = document.getElementById("kw").value * 1;
 
     let ycoord = calc({
         "Mittarilukema": mileage,
         "Ikä": age,
-        "Cm3": avgCubic,
+        "Kw": power,
     }, coefs);
 
     document.getElementById("valueTax").innerHTML = Math.round(ycoord);
     document.getElementById("calculatedTax").innerHTML = Math.round(ycoord * (taxPercentage / 100.0));
-    document.getElementById("value").innerHTML = Math.round(ycoord * (taxPercentage / 100.0 + 1.0)) + " EUR";
+    document.getElementById("usedPercentage").innerHTML = taxPercentage;
 
     let coords = [
         [mileage, 0],
@@ -357,7 +391,7 @@ function updatePrediction(event) {
 function updateTable(tableId, items) {
     clearEntries();
 
-    let keyOrder = ["Merkki", "Malli", "Vuosimalli", "Mittarilukema", "Verotusarvo", "Veroprosentti", "Cm3"];
+    let keyOrder = ["Merkki", "Malli", "Vuosimalli", "Mittarilukema", "Kw", "Verotusarvo", "Veroprosentti"];
 
     let table = document.getElementById(tableId);
     let tbody = table.getElementsByTagName("tbody")[0];

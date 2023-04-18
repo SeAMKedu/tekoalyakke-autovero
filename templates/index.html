@@ -41,9 +41,17 @@
                 </div>
                 <div class="row">
                     <div class="col">
+                        <label for="mileage">Teho</label>
+                        <input type="range" id="kw" disabled />
+                        <input type="number" id="valueKw"></output> kW
+                    </div>
+                    <div class="col">
+                    </div>
+                <div class="row">
+                    <div class="col">
                         <label for="mileage">Mittarilukema</label>
                         <input type="range" id="mileage" disabled />
-                        <input type="number" id="valueMileage"></output>
+                        <input type="number" id="valueMileage"></output> * 1000 km
                     </div>
                     <div class="col">
                         <div>
@@ -56,15 +64,14 @@
                     <div class="col">
                         <label for="age">Ikä</label>
                         <input type="range" id="age" disabled />
-                        <input type="number" id="valueAge"></output>
+                        <input type="number" id="valueAge"></output> y
                     </div>
                     <div class="col">
-                        <div>
+                        <div id="calculatedValues">
                             <output id="valueTax">TBD</output>
-                            +
+                            &#x2B95;
                             <output id="calculatedTax">TBD</output>
-                            =
-                            <output id="value"></output>
+                            @ <output id="usedPercentage">TBD</output>%
                         </div>
                     </div>
                     <div class="col"></div>
@@ -79,9 +86,9 @@
                             <th data-width="400">Malli</th>
                             <th data-align="right" data-width="100">Vuosimalli</th>
                             <th class="sorttable_numeric" data-align="right" data-width="100">Km</th>
+                            <th class="sorttable_numeric" data-align="right" data-width="100">Teho</th>
                             <th class="sorttable_numeric" data-align="right" data-width="100">Verotusarvo</th>
                             <th class="sorttable_numeric" data-align="right" data-width="50">Veroprosentti</th>
-                            <th class="sorttable_numeric" data-align="right" data-width="100">Cm3</th>
                         </thead>
                         <tbody id="entriesBody">
 

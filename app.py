@@ -49,7 +49,7 @@ def importData(path, pickleTarget):
     # rename columns to simpler
     df.rename(columns={"Kunto A=Alennettu": "Kunto", "Ajokm/1000": "Mittarilukema"}, inplace=True)
 
-    dateColumns = ["Päätöspäivä", "Käyttöönottopvä", "Ensirekisteröintipäivä"]
+    dateColumns = ["Päätöspäivä", "Ensirekisteröintipäivä"]
     strColumns = ["Merkki", "Malli", "Mallin tarkennin", "Kunto", "Käyttövoima"]
 
     # convert to datetime
@@ -58,6 +58,7 @@ def importData(path, pickleTarget):
         df[c] = df[c].str[:8]     # only take eigth first letters YYYYmmdd
         df[c] = pd.to_datetime(df[c], format="%Y%m%d", errors = 'coerce') # handle errors, data contains oddities
         df[c] = df[c].dt.date     # only use date part
+        #df[c] = df[c].notna()
 
     # convert to lowercase
     for c in strColumns:
@@ -70,16 +71,16 @@ def importData(path, pickleTarget):
     df["Mittarilukema"].replace(' ', np.nan, regex=True, inplace=True)
     df["Mittarilukema"].replace('', np.nan, regex=True, inplace=True)
     df["Mittarilukema"].replace(r'^\s*$', np.nan, regex=True, inplace=True)
-    df["Mittarilukema"].fillna(value=df["Km/1000"], inplace=True)
     df["Mittarilukema"].fillna(0.0, inplace=True)
     df["Mittarilukema"] = df["Mittarilukema"].astype(int)
 
     df["Cm3"].fillna(0, inplace=True)
+    df["Kw"].fillna(0, inplace=True)
+    df["Kw"] = df["Kw"].replace({'nan': 0})
+    df["Kw"] = df["Kw"].astype(int)
 
-    df["Käyttöönottopvä"] = df["Käyttöönottopvä"].fillna(df["Ensirekisteröintipäivä"])
     df["Kunto"] = df["Kunto"].fillna('n')
     df["Kunto"] = df["Kunto"].replace({'nan': 'n'})
-    df = df.drop(["Km/1000", "Ensirekisteröintipäivä"], axis=1)
 
     # convert letter values to numbers
     codes, uniques = pd.factorize(df["Kunto"].to_list(), sort=True)
@@ -110,14 +111,17 @@ def importData(path, pickleTarget):
     df["NormAge"] = df.apply(lambda row : (row["Päätöspäivä"] - earliestDate).days / (latestDate - earliestDate).days, axis=1)
     df["Weight"] = df.apply(lambda row : 1 / (1 + math.exp(-(row["NormAge"] + a) / k)), axis=1)
 
-    df["Vuosimalli"] = df.apply(lambda row : row["Käyttöönottopvä"].year, axis=1)
+
+    df["Vuosimalli"] = df.apply(lambda row : row["Ensirekisteröintipäivä"].year, axis=1)
     df["Vuosimalli"] = df["Vuosimalli"].astype("Int64")
 
-    df["Ikä"] = (df["Päätöspäivä"] - df["Käyttöönottopvä"]).dt.days
+    df["Ikä"] = (df["Päätöspäivä"] - df["Ensirekisteröintipäivä"]).dt.days
     df["Ikä"] = df["Ikä"].astype("Int64")
+    #df["Ikä"] = df["Ikä"].fillna(0)
+    df = df.dropna(axis=0, subset=["Ikä"])
 
     # select interesting columns and sort by taxation date
-    export = df[["Merkki", "Malli", "Vuosimalli", "Mittarilukema", "Kunto", "Käyttöönottopvä", "Päätöspäivä", "Ikä", "Verotusarvo", "Autovero", "Arvo", "Veroprosentti", "Weight", "Cm3"]]
+    export = df[["Merkki", "Malli", "Vuosimalli", "Mittarilukema", "Kunto", "Ensirekisteröintipäivä", "Päätöspäivä", "Ikä", "Verotusarvo", "Autovero", "Arvo", "Veroprosentti", "Weight", "Cm3", "Kw"]]
     export = export.sort_values(by=["Päätöspäivä"])
     export.reset_index(drop=True, inplace=True)
 
@@ -157,15 +161,17 @@ def list_entries(make, model):
 @app.route("/api/coeffs/<make>/<model>")
 def get_coeffs(make, model):
     data = df[((df["Merkki"] == make) & (df["Malli"] == model))]
+    # exclude outliers
     q = data["Mittarilukema"].quantile(0.99)
     data = data[data["Mittarilukema"] < q]
-    splitIdx = int(data.shape[0] * 0.9)
-    training = data[:-(data.shape[0] - splitIdx)]
-    columns = ["Mittarilukema", "Ikä", "Cm3"]
-    train = training[columns].values
+    # not using testing for validation, so commented out
+    #splitIdx = int(data.shape[0] * 0.9)
+    #training = data[:-(data.shape[0] - splitIdx)]
+    columns = ["Mittarilukema", "Ikä", "Kw"]
+    train = data[columns].values
 
     regr = linear_model.LinearRegression()
-    regr.fit(train, training["Verotusarvo"], sample_weight=training["Weight"])
+    regr.fit(train, data["Verotusarvo"], sample_weight=data["Weight"])
 
     return jsonify([regr.coef_.tolist(), regr.intercept_])
 
