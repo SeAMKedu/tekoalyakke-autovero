@@ -2,6 +2,8 @@
 [epliitto_logo]:    /img/EPLiitto_logo_vaaka_vari.jpg
 [screenshot]:       /img/screenshot.jpg
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10677529.svg)](https://doi.org/10.5281/zenodo.10677529)
+
 # Autoveron ennakointi
 
 Tekoäly-AKKE hankkeessa yhtenä demona loimme autoveron ennakointi työkalun. Se lukee verottajalta saatavilla olevat veropäätökset sisään ja koneoppimista hyväksikäyttäen antaa mahdollisuuden ennakoida mikä voisi olla jonkin tietyn ikäisen automallin verotusarvo ja autovero. 
